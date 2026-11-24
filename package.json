@@ -1,0 +1,18 @@
+{
+  "name": "clive-learn",
+  "private": true,
+  "description": "Material for learning Clive (Compose Live): algorithm visualizations and more.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "check": "node scripts/check-algorithms.mjs",
+    "build": "bash scripts/build-site.sh",
+    "api": "node scripts/build-api.mjs build/site",
+    "serve": "node scripts/serve.mjs build/site"
+  },
+  "devDependencies": {
+    "algorithm-visualizer": "2.3.9"
+  }
+}

@@ -1,0 +1,218 @@
+diff --git a/public/index.html b/public/index.html
+index 3ea91f1..ad1c895 100644
+--- a/public/index.html
++++ b/public/index.html
+@@ -1,35 +1,24 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
+-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-78128848-1"></script>
+-    <script>
+-      window.dataLayer = window.dataLayer || [];
+-
+-      function gtag() {
+-        dataLayer.push(arguments);
+-      }
+-
+-      gtag('js', new Date());
+-      gtag('config', 'UA-78128848-1');
+-    </script>
+     <meta charset="utf-8">
+     <meta http-equiv="x-ua-compatible" content="ie=edge">
+     <meta name="viewport" content="width=device-width">
+     <meta name="theme-color" content="#393939">
+-    <meta name="description" content="$DESCRIPTION" data-react-helmet="true" />
++    <meta name="description" content="Visualizations of the algorithms inside Clive (Compose Live)." data-react-helmet="true" />
+     <meta property="og:image"
+           content="https://raw.githubusercontent.com/algorithm-visualizer/algorithm-visualizer/master/branding/screenshot.png" />
+-    <meta property="og:site_name" content="Algorithm Visualizer" />
++    <meta property="og:site_name" content="Clive Learn" />
+     <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.png" type="image/png">
+     <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
+     <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+-    <title>$TITLE</title>
++    <title>Clive Learn</title>
+ </head>
+ <body>
+ <noscript>You need to enable JavaScript to run this app.</noscript>
+ <div id="root"></div>
+ <script>
+-  window.__PRELOADED_ALGORITHM__ = $ALGORITHM;
++  window.__PRELOADED_ALGORITHM__ = undefined;
+ </script>
+ </body>
+ </html>
+diff --git a/src/apis/index.js b/src/apis/index.js
+index 2a1001c..84769b2 100644
+--- a/src/apis/index.js
++++ b/src/apis/index.js
+@@ -5,7 +5,7 @@ axios.interceptors.response.use(response => response.data);
+ 
+ const request = (url, process) => {
+   const tokens = url.split('/');
+-  const baseURL = /^https?:\/\//i.test(url) ? '' : '/api';
++  const baseURL = /^https?:\/\//i.test(url) ? '' : './api';
+   return (...args) => {
+     const mappedURL = baseURL + tokens.map((token, i) => token.startsWith(':') ? args.shift() : token).join('/');
+     return Promise.resolve(process(mappedURL, args));
+@@ -47,9 +47,17 @@ const PATCH = URL => {
+   });
+ };
+ 
++// Served as static JSON files generated at build time (see clive-learn scripts/build-api.mjs).
++const GET_JSON = URL => {
++  return request(URL, (mappedURL, args) => {
++    const [params, cancelToken] = args;
++    return axios.get(`${mappedURL}.json`, { params, cancelToken });
++  });
++};
++
+ const AlgorithmApi = {
+-  getCategories: GET('/algorithms'),
+-  getAlgorithm: GET('/algorithms/:categoryKey/:algorithmKey'),
++  getCategories: GET_JSON('/algorithms'),
++  getAlgorithm: GET_JSON('/algorithms/:categoryKey/:algorithmKey'),
+ };
+ 
+ const VisualizationApi = {
+@@ -83,7 +91,7 @@ const TracerApi = {
+   }]),
+   json: ({ code }) => new Promise(resolve => resolve(JSON.parse(code))),
+   js: ({ code }, params, cancelToken) => new Promise((resolve, reject) => {
+-    const worker = new Worker('/api/tracers/js/worker');
++    const worker = new Worker('./api/tracers/js/worker.js');
+     if (cancelToken) {
+       cancelToken.promise.then(cancel => {
+         worker.terminate();
+diff --git a/src/common/config.js b/src/common/config.js
+index e716405..d7eb30a 100644
+--- a/src/common/config.js
++++ b/src/common/config.js
+@@ -1,20 +1,10 @@
+-import { CODE_CPP, CODE_JAVA, CODE_JS } from 'files';
++import { CODE_JS } from 'files';
+ 
+ const languages = [{
+   name: 'JavaScript',
+   ext: 'js',
+   mode: 'javascript',
+   skeleton: CODE_JS,
+-}, {
+-  name: 'C++',
+-  ext: 'cpp',
+-  mode: 'c_cpp',
+-  skeleton: CODE_CPP,
+-}, {
+-  name: 'Java',
+-  ext: 'java',
+-  mode: 'java',
+-  skeleton: CODE_JAVA,
+ }];
+ 
+ const exts = languages.map(language => language.ext);
+diff --git a/src/components/Header/index.js b/src/components/Header/index.js
+index f9fa9ef..f2a0070 100644
+--- a/src/components/Header/index.js
++++ b/src/components/Header/index.js
+@@ -8,12 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+ import faAngleRight from '@fortawesome/fontawesome-free-solid/faAngleRight';
+ import faCaretDown from '@fortawesome/fontawesome-free-solid/faCaretDown';
+ import faCaretRight from '@fortawesome/fontawesome-free-solid/faCaretRight';
+-import faCodeBranch from '@fortawesome/fontawesome-free-solid/faCodeBranch';
+ import faExpandArrowsAlt from '@fortawesome/fontawesome-free-solid/faExpandArrowsAlt';
+-import faGithub from '@fortawesome/fontawesome-free-brands/faGithub';
+-import faTrashAlt from '@fortawesome/fontawesome-free-solid/faTrashAlt';
+-import faSave from '@fortawesome/fontawesome-free-solid/faSave';
+-import faFacebook from '@fortawesome/fontawesome-free-brands/faFacebook';
+ import faStar from '@fortawesome/fontawesome-free-solid/faStar';
+ import { GitHubApi } from 'apis';
+ import { classes, refineGist } from 'common/util';
+@@ -110,10 +105,8 @@ class Header extends BaseComponent {
+ 
+   render() {
+     const { className, onClickTitleBar, navigatorOpened } = this.props;
+-    const { scratchPaper, titles, saved } = this.props.current;
+-    const { ext, user } = this.props.env;
+-
+-    const permitted = this.hasPermission();
++    const { scratchPaper, titles } = this.props.current;
++    const { ext } = this.props.env;
+ 
+     return (
+       <header className={classes(styles.header, className)}>
+@@ -135,32 +128,12 @@ class Header extends BaseComponent {
+             </Button>
+           </div>
+           <div className={styles.section}>
+-            <Button icon={permitted ? faSave : faCodeBranch} primary disabled={permitted && saved}
+-                    onClick={() => this.saveGist()}>{permitted ? 'Save' : 'Fork'}</Button>
+-            {
+-              permitted &&
+-              <Button icon={faTrashAlt} primary onClick={() => this.deleteGist()} confirmNeeded>Delete</Button>
+-            }
+-            <Button icon={faFacebook} primary
+-                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}>Share</Button>
+             <Button icon={faExpandArrowsAlt} primary
+                     onClick={() => this.handleClickFullScreen()}>Fullscreen</Button>
+           </div>
+         </div>
+         <div className={styles.row}>
+           <div className={styles.section}>
+-            {
+-              user ?
+-                <Button className={styles.btn_dropdown} icon={user.avatar_url}>
+-                  {user.login}
+-                  <div className={styles.dropdown}>
+-                    <ListItem label="Sign Out" href="/api/auth/destroy" rel="opener"/>
+-                  </div>
+-                </Button> :
+-                <Button icon={faGithub} primary href="/api/auth/request" rel="opener">
+-                  <Ellipsis>Sign In</Ellipsis>
+-                </Button>
+-            }
+             <Button className={styles.btn_dropdown} icon={faStar}>
+               {languages.find(language => language.ext === ext).name}
+               <div className={styles.dropdown}>
+diff --git a/src/index.js b/src/index.js
+index 4921312..097da03 100644
+--- a/src/index.js
++++ b/src/index.js
+@@ -1,7 +1,7 @@
+ import React from 'react';
+ import ReactDOM from 'react-dom';
+ import { combineReducers, createStore } from 'redux';
+-import { BrowserRouter, Route, Switch } from 'react-router-dom';
++import { HashRouter, Route, Switch } from 'react-router-dom';
+ import { Provider } from 'react-redux';
+ import { routerReducer } from 'react-router-redux';
+ import App from 'components/App';
+@@ -12,11 +12,11 @@ const store = createStore(combineReducers({ ...reducers, routing: routerReducer
+ 
+ ReactDOM.render(
+   <Provider store={store}>
+-    <BrowserRouter>
++    <HashRouter>
+       <Switch>
+         <Route exact path="/scratch-paper/:gistId" component={App}/>
+         <Route exact path="/:categoryKey/:algorithmKey" component={App}/>
+         <Route path="/" component={App}/>
+       </Switch>
+-    </BrowserRouter>
++    </HashRouter>
+   </Provider>, document.getElementById('root'));
+diff --git a/src/reducers/current.js b/src/reducers/current.js
+index 215c281..3ddac4b 100644
+--- a/src/reducers/current.js
++++ b/src/reducers/current.js
+@@ -36,9 +36,9 @@ export const actions = {
+   renameFile,
+ };
+ 
+-const homeTitles = ['Algorithm Visualizer'];
++const homeTitles = ['Clive Learn'];
+ const homeFiles = [ROOT_README_MD];
+-const homeDescription = 'Algorithm Visualizer is an interactive online platform that visualizes algorithms from code.';
++const homeDescription = 'Visualizations of the algorithms inside Clive (Compose Live).';
+ const defaultState = {
+   algorithm: {
+     categoryKey: 'algorithm-visualizer',

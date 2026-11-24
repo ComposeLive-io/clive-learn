@@ -1,0 +1,5 @@
+# algorithm-visualizer frontend commit the site is built from
+FRONTEND_REPO=https://github.com/algorithm-visualizer/algorithm-visualizer.git
+FRONTEND_SHA=18de2edf6b629e843ee4bcedfa2208d22b253f0f
+# Dart Sass stands in for node-sass, which has no binaries for current Node
+SASS_VERSION=1.32.13
