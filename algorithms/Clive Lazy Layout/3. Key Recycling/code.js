@@ -2,7 +2,7 @@
 const { Tracer, Array1DTracer, LogTracer, Layout, VerticalLayout } = require('algorithm-visualizer');
 // }
 
-// The key recycler, ported from Clive's live code {
+// The key recycler, ported from Clive's live code
 // Each composed item is wrapped in key(k) { ... }. Compose identifies the item's composition by k,
 // so handing k to another index moves the composition there instead of creating a new one.
 class KeyRecycler {
@@ -30,9 +30,8 @@ class KeyRecycler {
     return key;
   }
 }
-// }
 
-// The scenario {
+// The scenario
 const itemCount = 16;
 // expect: [moved, composed from scratch, disposed] for each window, worked out by hand.
 const windows = [
@@ -43,7 +42,6 @@ const windows = [
   { window: [6, 11], expect: [0, 0, 4], say: 'The window shrinks: four keys go to the pool and their compositions are disposed.' },
   { window: [7, 12], expect: [0, 1, 1], say: 'Slide by one: item 12 takes a pooled key, but that key\'s composition was already disposed, so it is composed again.' },
 ];
-// }
 
 // define tracer variables {
 const list = new Array1DTracer('Key of each item (· = not composed). Blue = window, red = key changed');

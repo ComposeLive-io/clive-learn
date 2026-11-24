@@ -2,7 +2,7 @@
 const { Tracer, Array2DTracer, LogTracer, Layout, VerticalLayout } = require('algorithm-visualizer');
 // }
 
-// Splitting one window into a range per interval, ported from Clive's live code {
+// Splitting one window into a range per interval, ported from Clive's live code
 // intervals: the size of each item()/items() call, in order.
 // window: [first, last] in the layout's own index space, the one the host reports in.
 // Returns one [first, last] per interval in that interval's own indexes, or null if it has none.
@@ -17,16 +17,16 @@ function spanning(window, intervals) {
   }
   return ranges;
 }
-// }
 
-// The layout {
-// LazyColumn {
-//   item { Header() }
-//   items(20) { Product(it) }
-//   item { Loading() }
-//   items(searchResults.size) { Result(it) }   // no results yet
-//   items(15) { Recommendation(it) }
-// }
+/* The layout:
+  LazyColumn {
+    item { Header() }
+    items(20) { Product(it) }
+    item { Loading() }
+    items(searchResults.size) { Result(it) }   // no results yet
+    items(15) { Recommendation(it) }
+  }
+*/
 const intervals = [
   { name: 'item { Header }', size: 1 },
   { name: 'items(20) Product', size: 20 },

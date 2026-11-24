@@ -2,7 +2,7 @@
 const { Tracer, Array1DTracer, ChartTracer, LogTracer, Layout, VerticalLayout } = require('algorithm-visualizer');
 // }
 
-// The strategy, ported from Clive's live code {
+// The strategy, ported from Clive's live code
 // How many items to compose before the host has reported anything.
 const FALLBACK_ITEM_COUNT = 30;
 // A window only shrinks once it wants to be smaller than this fraction of its current size.
@@ -47,9 +47,8 @@ class ProportionalLoadWindow {
     return window[0] > last ? null : [window[0], last];
   }
 }
-// }
 
-// The scenario: what the host reports, step by step {
+// The scenario: what the host reports, step by step
 // expect: the window composed after the step, worked out by hand. The run fails if the port disagrees.
 const steps = [
   { itemCount: 60, firstVisible: 0, expect: [0, 29],
@@ -81,7 +80,6 @@ const steps = [
   { itemCount: 60, report: [0, 9], expect: [0, 19],
     say: 'The host reports 0..9. Same window: nothing to compose, nothing to throw away.' },
 ];
-// }
 
 // define tracer variables {
 const chart = new ChartTracer('Window size after each step');

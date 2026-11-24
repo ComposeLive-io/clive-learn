@@ -46,7 +46,10 @@ read, since the menu sorts by name.
 
 ### `code.js`
 
-Structure it in this order, using `// name {` … `// }` blocks (the editor folds them):
+Structure it in this order. The editor folds every line comment that ends in `{` up to its `// }`,
+so wrap plumbing in `// name {` … `// }` blocks, and keep the port and the scenario, which are what
+the reader came for, under plain comment headers with no `{`. Code samples in comments go in
+`/* */`, since a `// … {` line would fold:
 
 1. `// import visualization libraries {`: `require('algorithm-visualizer')`, the only module available.
 2. **The port**: the algorithm as plain JS, free of tracer calls, mirroring Clive's behaviour exactly:
