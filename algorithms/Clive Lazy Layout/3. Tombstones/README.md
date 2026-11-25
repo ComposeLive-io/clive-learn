@@ -8,6 +8,8 @@ Live code composes each item of the window inside `key(…) { … }`. An item wi
 
 That alone isn't enough, because of how Compose reconciles keyed groups. Going through the new groups in order, it **moves** every group that was there before whenever a group that is gone came before it, and removes the gone groups only at the end. When the window `0..24` slides to `1..25`, item 0's group is gone and sits in front of all the others, so all 24 items that stay are moved, on every slide. Inserting a group moves nothing.
 
+For the key recycling that tombstones replaced, compared with them step by step, see **4. Key Recycling and Tombstones**.
+
 ## The rule
 
 1. **Groups run from a base to the end of the window.** Live code emits one keyed group per index from `base` to the window's last item. The groups below the window's first item are tombstones: no content and no widgets, so the host still gets just the window's items, in index order.
