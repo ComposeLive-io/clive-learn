@@ -22,13 +22,13 @@ The work is split by what each side can know:
 
 ## Why a steady size matters
 
-Compose keys recycle as the window slides: an item leaving the window gives its composition to the item entering it, so Compose *moves* existing groups instead of disposing one and composing another. A window that keeps its size therefore costs almost nothing to slide. A window that grows composes new items from scratch, and one that shrinks throws composed items away. See **3. Key Recycling**.
+Every item entering the window is composed from scratch, and every item leaving it is disposed. The items that stay keep their compositions and cost nothing, so a window that keeps its size costs only what scrolling brings into view. A window that grows composes many items at once, and one that shrinks throws away items the user may scroll straight back to. See **3. Tombstones** for how the items that stay are kept from being moved.
 
 ## What to watch in the player
 
 - **Blue** cells are on screen, **red** cells were composed from scratch this step, numbers are composed items and `·` are placeholders.
 - The chart is the window size after each step. It stays flat while the visible count alternates between 10 and 11 (steps 2 to 7). It drops on rotation (step 8) and holds through the Loading item (step 12).
-- The log shows, at every step, how many items were moved, composed from scratch and thrown away.
+- The log shows, at every step, how many items were composed and how many disposed.
 
 ## Configuring it
 
