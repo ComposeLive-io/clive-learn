@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Builds the static site into build/site:
 #   the algorithm-visualizer frontend at the commit pinned in visualizer/UPSTREAM, patched for static
-#   hosting, plus the algorithms as static JSON, the JS worker and the tracers library.
+#   hosting, plus the algorithms as static JSON, the recorded Kotlin visualizations, the JS worker
+#   and the tracers library.
 # The result works from any path (GitHub Pages project site, localhost), since every URL is relative.
 set -euo pipefail
 

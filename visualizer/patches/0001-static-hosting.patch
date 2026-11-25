@@ -43,7 +43,7 @@ index 3ea91f1..ad1c895 100644
  </body>
  </html>
 diff --git a/src/apis/index.js b/src/apis/index.js
-index 2a1001c..84769b2 100644
+index 2a1001c..32c31c3 100644
 --- a/src/apis/index.js
 +++ b/src/apis/index.js
 @@ -5,7 +5,7 @@ axios.interceptors.response.use(response => response.data);
@@ -84,20 +84,38 @@ index 2a1001c..84769b2 100644
      if (cancelToken) {
        cancelToken.promise.then(cancel => {
          worker.terminate();
+@@ -100,6 +108,17 @@ const TracerApi = {
+     };
+     worker.postMessage(code);
+   }),
++  // Kotlin can't run in the browser: replay what the code recorded when the site was built, found by
++  // the SHA-256 of the code, so edited code has no recording.
++  kt: ({ code }, params, cancelToken) => crypto.subtle.digest('SHA-256', new TextEncoder().encode(code))
++    .then(digest => {
++      const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
++      return axios.get(`./api/tracers/kt/${hash}.json`, { cancelToken });
++    })
++    .catch(error => {
++      if (axios.isCancel(error) || !error.response || error.response.status !== 404) throw error;
++      throw new Error('Kotlin visualizations are recorded when the site is built, so edited code can\'t run here. Reload the page to restore the original code.');
++    }),
+   cpp: POST('/tracers/cpp'),
+   java: POST('/tracers/java'),
+ };
 diff --git a/src/common/config.js b/src/common/config.js
-index e716405..d7eb30a 100644
+index e716405..3ca6a9c 100644
 --- a/src/common/config.js
 +++ b/src/common/config.js
-@@ -1,20 +1,10 @@
+@@ -1,4 +1,4 @@
 -import { CODE_CPP, CODE_JAVA, CODE_JS } from 'files';
 +import { CODE_JS } from 'files';
  
  const languages = [{
    name: 'JavaScript',
-   ext: 'js',
+@@ -6,15 +6,11 @@ const languages = [{
    mode: 'javascript',
    skeleton: CODE_JS,
--}, {
+ }, {
 -  name: 'C++',
 -  ext: 'cpp',
 -  mode: 'c_cpp',
@@ -107,11 +125,28 @@ index e716405..d7eb30a 100644
 -  ext: 'java',
 -  mode: 'java',
 -  skeleton: CODE_JAVA,
++  // Recorded when the site is built (see clive-learn scripts/kotlin.mjs), so it can be replayed but
++  // not written here: no skeleton, and not offered as the language for new code.
++  name: 'Kotlin',
++  ext: 'kt',
++  mode: 'kotlin',
  }];
  
  const exts = languages.map(language => language.ext);
+diff --git a/src/components/FoldableAceEditor/index.js b/src/components/FoldableAceEditor/index.js
+index 2b344f3..16b2eec 100644
+--- a/src/components/FoldableAceEditor/index.js
++++ b/src/components/FoldableAceEditor/index.js
+@@ -6,6 +6,7 @@ import 'brace/mode/json';
+ import 'brace/mode/javascript';
+ import 'brace/mode/c_cpp';
+ import 'brace/mode/java';
++import 'brace/mode/kotlin';
+ import 'brace/theme/tomorrow_night_eighties';
+ import 'brace/ext/searchbox';
+ import { actions } from 'reducers';
 diff --git a/src/components/Header/index.js b/src/components/Header/index.js
-index f9fa9ef..f2a0070 100644
+index f9fa9ef..e2910da 100644
 --- a/src/components/Header/index.js
 +++ b/src/components/Header/index.js
 @@ -8,12 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -140,7 +175,7 @@ index f9fa9ef..f2a0070 100644
  
      return (
        <header className={classes(styles.header, className)}>
-@@ -135,32 +128,12 @@ class Header extends BaseComponent {
+@@ -135,37 +128,17 @@ class Header extends BaseComponent {
              </Button>
            </div>
            <div className={styles.section}>
@@ -173,6 +208,12 @@ index f9fa9ef..f2a0070 100644
              <Button className={styles.btn_dropdown} icon={faStar}>
                {languages.find(language => language.ext === ext).name}
                <div className={styles.dropdown}>
+                 {
+-                  languages.map(language => language.ext === ext ? null : (
++                  languages.filter(language => language.skeleton).map(language => language.ext === ext ? null : (
+                     <ListItem key={language.ext} onClick={() => this.props.setExt(language.ext)}
+                               label={language.name}/>
+                   ))
 diff --git a/src/index.js b/src/index.js
 index 4921312..097da03 100644
 --- a/src/index.js

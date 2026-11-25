@@ -12,11 +12,11 @@ Step-by-step visualizations of Clive's algorithms, played in
 - **Clive Lazy Layout**
   1. [Load Window](https://composelive-io.github.io/clive-learn/#/clive-lazy-layout/1-load-window): how many items a lazy list composes, and how that window slides.
   2. [Window Across Intervals](https://composelive-io.github.io/clive-learn/#/clive-lazy-layout/2-window-across-intervals): splitting one window across `item {}` and `items()` calls.
-  3. [Key Recycling](https://composelive-io.github.io/clive-learn/#/clive-lazy-layout/3-key-recycling): why sliding the window moves compositions instead of rebuilding them.
+  3. [Tombstones](https://composelive-io.github.io/clive-learn/#/clive-lazy-layout/3-tombstones): how sliding the window keeps Compose from moving the items that stay.
 
 ## Run locally
 
-Requires Node 20 or newer.
+Requires Node 20 or newer and JDK 17 or newer (Gradle runs the Kotlin visualizations; `./gradlew` downloads it).
 
 ```
 npm ci

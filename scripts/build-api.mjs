@@ -2,10 +2,13 @@
 //   <site>/api/algorithms.json                    { categories: [{ key, name, algorithms: [{ key, name }] }] }
 //   <site>/api/algorithms/<category>/<algo>.json  { algorithm: { categoryKey, categoryName, algorithmKey,
 //                                                                algorithmName, files, description } }
+//   <site>/api/tracers/kt/<sha256 of code.kt>.json  the commands a Kotlin visualization recorded
 // Keys and descriptions are made the way the upstream algorithm-visualizer server makes them.
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { kotlinAlgorithms, recordKotlin } from './kotlin.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const algorithmsDir = path.join(root, 'algorithms');
@@ -82,5 +85,21 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       });
       console.log(`api: ${category.key}/${algorithm.key}`);
     }
+  }
+
+  // The player looks a Kotlin visualization's commands up by the hash of the code in the editor, so
+  // the recording is found only while the code is unchanged.
+  const kotlin = kotlinAlgorithms(categories);
+  const recorded = recordKotlin(kotlin);
+  fs.rmSync(path.join(api, 'tracers', 'kt'), { recursive: true, force: true });
+  for (const { category, algorithm } of kotlin) {
+    const result = recorded.get(algorithm.dir);
+    if (result.error) throw new Error(`${category.name} / ${algorithm.name}: ${result.error}`);
+    const code = algorithm.files.find(file => file.name === 'code.kt').content;
+    const hash = crypto.createHash('sha256').update(code, 'utf-8').digest('hex');
+    const file = path.join(api, 'tracers', 'kt', `${hash}.json`);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, result.commands);
+    console.log(`api: ${category.key}/${algorithm.key} recorded`);
   }
 }
